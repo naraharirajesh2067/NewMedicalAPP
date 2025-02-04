@@ -77,6 +77,7 @@ fun SplashScreen(navController: NavHostController) {
             )
         }
 
+
         // Column to stack "Welcome, Farmer!" and Farmer Logo
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
