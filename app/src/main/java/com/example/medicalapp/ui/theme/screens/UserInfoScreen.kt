@@ -3,6 +3,7 @@
 package com.example.medicalapp.ui.theme.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,33 +46,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.medicalapp.ui.theme.UserData
 import com.example.medicalapp.ui.theme.UserPreferences
 import kotlinx.coroutines.launch
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("RememberReturnType")
 @Composable
 fun UserInfoScreen(navController: NavHostController) {
-
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
-
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-
     val coroutineScope = rememberCoroutineScope()
 
-    // Load saved data
-    LaunchedEffect(Unit) {
-        userPreferences.userData.collect { savedData ->
-            username = savedData.username
-            email = savedData.email
-            phone = savedData.phone
-        }
-    }
+    // Observe data from SharedPreferences
+    val userData by userPreferences.userData.collectAsState(initial = UserData("", "", ""))
+    var username by remember { mutableStateOf(userData.username) }
+    var email by remember { mutableStateOf(userData.email) }
+    var phone by remember { mutableStateOf(userData.phone) }
 
+    // Update UI fields when userData changes
+    LaunchedEffect(userData) {
+        username = userData.username
+        email = userData.email
+        phone = userData.phone
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -155,7 +154,7 @@ fun UserInfoScreen(navController: NavHostController) {
                     .width(200.dp)
                     .height(60.dp), // Removed extra padding inside button
                 colors = ButtonDefaults.buttonColors(
-                    contentColor = Color.White, containerColor = Color(0xFF388E3C)
+                    contentColor = Color.White, containerColor = Color(0xFF64B5F6)
                 ),
                 shape = RoundedCornerShape(12.dp) // Rounded button
             ) {
