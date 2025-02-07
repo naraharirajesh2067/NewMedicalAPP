@@ -50,7 +50,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    testImplementation(libs.junit)
+  implementation(libs.vision.common)
+  implementation(libs.image.labeling.default.common)
+  testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -70,6 +72,8 @@ dependencies {
     implementation (libs.androidx.datastore.preferences)
     implementation(libs.androidx.core.splashscreen)
     implementation (libs.androidx.datastore.preferences.v100)
-
-
+  implementation ("com.google.android.gms:play-services-location:21.0.1")
+  
+  
+  
 }

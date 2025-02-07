@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.net.Uri
 import android.os.Environment
-import android.provider.MediaStore
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -42,7 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.constraintlayout.compose.HorizontalAlign
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
@@ -50,6 +50,10 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.medicalapp.R
 import com.example.medicalapp.ui.theme.UserData
 import com.example.medicalapp.ui.theme.UserPreferences
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.location.Priority.*
 import java.io.File
 
 @Composable
@@ -57,6 +61,7 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
     val userData by userPreferences.userData.collectAsState(initial = UserData("", "", ""))
+   val locationInfo by ShareObjects.locationInfo.collectAsState()
     val items: List<Pair<Int, String>> = listOf(
         R.drawable.fecal_samples to "Fecal Sample",
         R.drawable.saliva_sample to "Saliva Sample",
@@ -105,7 +110,7 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
         ) {
             Text(
                 text = "Select Your Option",
-                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -166,7 +171,10 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                        sendEmail(context, uri, userData.email, userData.username, userData.phone)
+                        sendEmail(context, uri, userData.email, userData.username, userData.phone,locationInfo)
+                      capturedMediaUri = null
+                      navController.navigate(Routes.SplashScreen)
+                      
                     },
                     modifier = Modifier
                         .width(200.dp)
@@ -188,6 +196,7 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
             }
         }
     }
+  LocationScreen()
 }
 
 fun createMediaFile(context: Context, isCamera: Boolean): Uri {
@@ -205,22 +214,81 @@ fun checkPermission(context: Context, isCamera: Boolean): Boolean {
 }
 
 fun sendEmail(
-    context: Context,
-    fileUri: Uri,
-    email: String = "abcd@Qgmail.com",
-    username: String,
-    phone: String
+  context: Context,
+  fileUri: Uri,
+  email: String = "abcd@Qgmail.com",
+  username: String,
+  phone: String,
+  locationInfo: String
 ) {
-    val emailIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "application/octet-stream"
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(" ")) // Change recipient email
-        putExtra(Intent.EXTRA_SUBJECT, "Captured Media File")
-        putExtra(
-            Intent.EXTRA_TEXT,
-            "Please find the attached media file.\n UserName: $username \n Phone Number: $phone."
-        )
-        putExtra(Intent.EXTRA_STREAM, fileUri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
+  val locationUrl = "https://www.google.com/maps?q=$locationInfo"
+  
+  val emailIntent = Intent(Intent.ACTION_SEND).apply {
+    type = "application/octet-stream"
+    putExtra(Intent.EXTRA_EMAIL, arrayOf("donturahul@gmail.com")) // Change recipient email
+    putExtra(Intent.EXTRA_SUBJECT, "Captured Media File")
+    putExtra(Intent.EXTRA_TEXT, """
+    Please find the attached media file.
+    
+    UserName: $username
+    Phone Number: $phone
+    Location: $locationUrl
+""".trimIndent())
+    
+    putExtra(Intent.EXTRA_STREAM, fileUri)
+    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+  }
     context.startActivity(Intent.createChooser(emailIntent, "Send Email"))
+}
+fun getCurrentLocation(
+  context: Context,
+  fusedLocationClient: FusedLocationProviderClient,
+  onLocationReceived: (String) -> Unit
+) {
+  if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+    onLocationReceived("Permission not granted")
+    return
+  }
+  
+  fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+    if (location != null) {
+      val latitude = location.latitude
+      val longitude = location.longitude
+      onLocationReceived("$latitude,$longitude")
+    } else {
+      onLocationReceived("Location unavailable")
+    }
+  }.addOnFailureListener {
+    onLocationReceived("Failed to get location: ${it.message}")
+  }
+}
+
+
+@Composable
+fun LocationScreen() : Unit{
+  val context = LocalContext.current
+  val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+  val locationState = remember { mutableStateOf("Click to get location") }
+  
+  val locationPermissionLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.RequestPermission(),
+    onResult = { granted ->
+      if (granted) {
+        getCurrentLocation(context, fusedLocationClient) { location ->
+          locationState.value = location
+          ShareObjects.updateLocation(location)
+          
+        }
+      } else {
+        locationState.value = "Permission denied"
+        ShareObjects.updateLocation("Permission denied")
+        
+      }
+    }
+  )
+
+  LaunchedEffect(Unit) {
+    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+  }
+  
 }

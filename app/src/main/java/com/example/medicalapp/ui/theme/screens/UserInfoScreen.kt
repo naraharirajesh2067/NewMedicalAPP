@@ -148,6 +148,7 @@ fun UserInfoScreen(navController: NavHostController) {
                 onClick = {
                     coroutineScope.launch {
                         userPreferences.saveUserData(username, email, phone)
+                      navController.navigate(Routes.SplashScreen)
                     }
                 },
                 modifier = Modifier
