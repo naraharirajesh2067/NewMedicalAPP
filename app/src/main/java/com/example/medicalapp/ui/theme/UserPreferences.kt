@@ -64,9 +64,13 @@ class UserPreferences(context: Context) {
             putString("username", username)
             putString("email", email)
             putString("phone", phone)
+            putBoolean("isDataSaved",true)
             apply()
         }
         _userData.update { UserData(username, email, phone) }
+    }
+    fun isDataSaved() : Boolean{
+      return sharedPreferences.getBoolean("isDataSaved",false)
     }
 }
 

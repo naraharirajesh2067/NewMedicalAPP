@@ -105,7 +105,7 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
         ) {
             Text(
                 text = "Select Your Option",
-                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -167,6 +167,8 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
                 Button(
                     onClick = {
                         sendEmail(context, uri, userData.email, userData.username, userData.phone)
+                      capturedMediaUri = null
+                      navController.navigate(Routes.SplashScreen)
                     },
                     modifier = Modifier
                         .width(200.dp)
@@ -213,7 +215,7 @@ fun sendEmail(
 ) {
     val emailIntent = Intent(Intent.ACTION_SEND).apply {
         type = "application/octet-stream"
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(" ")) // Change recipient email
+        putExtra(Intent.EXTRA_EMAIL, arrayOf("donturahul@gmail.com")) // Change recipient email
         putExtra(Intent.EXTRA_SUBJECT, "Captured Media File")
         putExtra(
             Intent.EXTRA_TEXT,

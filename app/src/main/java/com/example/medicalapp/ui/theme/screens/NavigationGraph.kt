@@ -26,5 +26,9 @@ fun NavigationGraph() {
             val isCamera = backStackEntry.arguments?.getBoolean("isCamera") ?: true
             SamplesScreen(navController, isCamera)
         }
+        composable(Routes.LiveClassification){
+        //  LiveClassificationScreen(navController)
+          WebViewScreen()
+        }
     }
 }

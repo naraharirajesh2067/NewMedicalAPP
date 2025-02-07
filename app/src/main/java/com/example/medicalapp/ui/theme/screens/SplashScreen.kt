@@ -1,5 +1,11 @@
 package com.example.medicalapp.ui.theme.screens
 
+import android.annotation.SuppressLint
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,20 +44,27 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.medicalapp.R
+import com.example.medicalapp.ui.theme.UserData
+import com.example.medicalapp.ui.theme.UserPreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(navController: NavHostController) {
-    Box(
+  val context = LocalContext.current
+  val isDataSaved = remember { UserPreferences(context).isDataSaved() }
+  
+  Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
@@ -122,12 +136,19 @@ fun SplashScreen(navController: NavHostController) {
                 navController.navigate("samples_screen/false")
             }
             OptionButton("Live Classification", R.drawable.ic_live, Color(0xFFFFC107)) {
-                navController.navigate("samples_screen/false")
+                navController.navigate(Routes.LiveClassification)
             }
 
             Spacer(modifier = Modifier.height(60.dp))
         }
     }
+  if(!isDataSaved){
+    LaunchedEffect (Unit){
+      navController.navigate(Routes.UserInfoScreen)
+    }
+    
+  }
+  
 }
 
 // OptionButton with simple design and clean contrast
@@ -160,4 +181,32 @@ fun OptionButton(text: String, iconRes: Int, buttonColor: Color, onClick: () -> 
             )
         }
     }
+}
+
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun WebViewScreen() {
+  AndroidView(
+    modifier = Modifier.fillMaxSize(),
+    factory = { context ->
+      WebView(context).apply {
+        settings.javaScriptEnabled = true
+        settings.mediaPlaybackRequiresUserGesture = false
+        settings.allowFileAccess = true
+        settings.allowContentAccess = true
+        settings.domStorageEnabled = true
+        settings.javaScriptCanOpenWindowsAutomatically = true
+        settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        
+        webChromeClient = object : WebChromeClient() {
+          override fun onPermissionRequest(request: PermissionRequest) {
+            request.grant(request.resources)
+          }
+        }
+        
+        loadUrl("https://smartphone.edgeimpulse.com/classifier.html?apiKey=ei_b50306c0cbf330e9be5285945121c713078ca0039c3409dbf65367a04cd88f9d&impulseId=1")
+      }
+    }
+  )
 }
