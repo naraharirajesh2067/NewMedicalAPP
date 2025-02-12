@@ -50,6 +50,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.medicalapp.R
 import com.example.medicalapp.ui.theme.UserData
 import com.example.medicalapp.ui.theme.UserPreferences
+import com.example.medicalapp.ui.theme.screens.ShareObjects.sampleTypeUpdate
+import com.example.medicalapp.ui.theme.screens.ShareObjects.sampletypeInfo
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -62,7 +64,9 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
     val userPreferences = remember { UserPreferences(context) }
     val userData by userPreferences.userData.collectAsState(initial = UserData("", "", ""))
    val locationInfo by ShareObjects.locationInfo.collectAsState()
-    val items: List<Pair<Int, String>> = listOf(
+   val stype by ShareObjects.sampletypeInfo.collectAsState()
+  
+  val items: List<Pair<Int, String>> = listOf(
         R.drawable.fecal_samples to "Fecal Sample",
         R.drawable.saliva_sample to "Saliva Sample",
         R.drawable.urine_sample to "Urine Sample",
@@ -124,6 +128,7 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
                         .padding(8.dp)
                         .fillMaxWidth()
                         .clickable {
+                            sampleTypeUpdate(item.second)
                             if (hasPermission) {
                                 mediaUri.value = createMediaFile(context, isCamera)
                                 mediaLauncher.launch(mediaUri.value)
@@ -171,7 +176,7 @@ fun SamplesScreen(navController: NavHostController, isCamera: Boolean) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                        sendEmail(context, uri, userData.email, userData.username, userData.phone,locationInfo)
+                        sendEmail(context, uri, userData.email, userData.username, userData.phone,locationInfo,stype)
                       capturedMediaUri = null
                       navController.navigate(Routes.SplashScreen)
                       
@@ -216,22 +221,23 @@ fun checkPermission(context: Context, isCamera: Boolean): Boolean {
 fun sendEmail(
   context: Context,
   fileUri: Uri,
-  email: String = "abcd@Qgmail.com",
+  email: String = "vetdoctor518533@gmail.com",
   username: String,
   phone: String,
-  locationInfo: String
+  locationInfo: String,
+  stype : String
 ) {
   val locationUrl = "https://www.google.com/maps?q=$locationInfo"
-  
   val emailIntent = Intent(Intent.ACTION_SEND).apply {
     type = "application/octet-stream"
-    putExtra(Intent.EXTRA_EMAIL, arrayOf("donturahul@gmail.com")) // Change recipient email
+    putExtra(Intent.EXTRA_EMAIL, arrayOf("vetdoctor518533@gmail.com")) // Change recipient email
     putExtra(Intent.EXTRA_SUBJECT, "Captured Media File")
     putExtra(Intent.EXTRA_TEXT, """
     Please find the attached media file.
     
     UserName: $username
     Phone Number: $phone
+    Sample Type: $stype
     Location: $locationUrl
 """.trimIndent())
     

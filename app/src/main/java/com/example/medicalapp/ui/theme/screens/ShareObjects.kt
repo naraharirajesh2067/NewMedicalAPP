@@ -9,7 +9,12 @@ object ShareObjects{
   var locationStateObejct = MutableStateFlow("")
   val locationInfo : StateFlow<String> get() = locationStateObejct.asStateFlow()
   
+  var sampleType = MutableStateFlow("")
+  val sampletypeInfo : StateFlow<String> get() = sampleType.asStateFlow()
   fun updateLocation(loca : String){
     locationStateObejct.value = loca
+  }
+  fun sampleTypeUpdate(stype : String){
+    sampleType.value = stype
   }
 }
